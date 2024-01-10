@@ -40,7 +40,7 @@ class Sonner:
             if count >= self.size**2: break
         self.index_pred = tmp
 
-    def ditect_mov(self, dir: int, i: int):
+    def detect_mov(self, dir: int, i: int):
         tmp = set()
         for poses in self.poses_pred:
             for j in range(len(poses)):
@@ -65,7 +65,7 @@ class Sonner:
         self.poses_pred = np.array(list(tmp))
         self.gen_maps()
 
-    def ditect_obs(self, pos_obs: tuple):
+    def detect_obs(self, pos_obs: tuple):
         tmp = []
         pos_possibility = set([tuple(p) for p in list(pos_obs) + np.array(CAN_ATK) if p[0] >= 0 and p[0] < self.size and p[1] >= 0 and p[1] < self.size])
         for poses in self.poses_pred:
@@ -78,7 +78,7 @@ class Sonner:
         self.poses_pred = np.array(tmp)
         self.gen_maps()
 
-    def ditect_hit(self, pos_hit: tuple):
+    def detect_hit(self, pos_hit: tuple):
         tmp = []
         for poses in self.poses_pred:
             poses_set = set([tuple(p) for p in poses])
@@ -89,7 +89,7 @@ class Sonner:
         self.poses_pred = np.array(tmp)
         self.gen_maps()
 
-    def ditect_miss(self, pos_miss: tuple):
+    def detect_miss(self, pos_miss: tuple):
         tmp = []
         pos_possibility = set([tuple(p) for p in list(pos_miss) + np.array(CAN_ATK) if p[0] >= 0 and p[0] < self.size and p[1] >= 0 and p[1] < self.size])
         pos_possibility.add(pos_miss)
@@ -103,9 +103,9 @@ class Sonner:
         self.poses_pred = np.array(tmp)
         self.gen_maps()
 
-    def ditect_sink(self, pos_sink: tuple):
+    def detect_sink(self, pos_sink: tuple):
         tmp = []
-        self.ditect_hit(pos_sink)
+        self.detect_hit(pos_sink)
         self.ships -= 1
         for poses in self.poses_pred:
             poses = np.delete(poses, np.where(np.all(poses == pos_sink, axis=1))[0], axis=0)
