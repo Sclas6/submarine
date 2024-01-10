@@ -226,5 +226,6 @@ while(True):
     ax2 = fig.add_subplot(1, 2, 2)
     ax2 = gen_heatmap(map_allies, plt.cm.Greys)
     plt.pause(.001)
+    plt.savefig(f"logs/T{turn}_{command}_{token_list}")
 
     turn += 1
