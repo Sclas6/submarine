@@ -1,4 +1,4 @@
-from Sonner import Sonner
+from Sonar import Sonar
 from Submarine import Submarine
 from AI import AI, MapTools
 import numpy as np
@@ -34,8 +34,8 @@ POS_Y = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
 
 is_atacked = False
 turn = 0
-sonner_enemy = Sonner(MAP_SIZE, SHIPS)
-sonner_allies = Sonner(MAP_SIZE, SHIPS)
+sonner_enemy = Sonar(MAP_SIZE, SHIPS)
+sonner_allies = Sonar(MAP_SIZE, SHIPS)
 
 hp_enemy = 12
 hp_allies = 12

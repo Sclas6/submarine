@@ -1,4 +1,4 @@
-from Sonner import Sonner
+from Sonar import Sonar
 import numpy as np
 from random import choice
 
@@ -57,7 +57,7 @@ class MapTools:
 class AI:
     def place_submarines():
         m = 0
-        tmp = Sonner(5, 4)
+        tmp = Sonar(5, 4)
         for map in tmp.maps:
             m = max(m, len(MapTools.can_atack(map)))
         ls = [map for map in tmp.maps if len(MapTools.can_atack(map)) == m]
