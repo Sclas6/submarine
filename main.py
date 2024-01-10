@@ -2,8 +2,12 @@ from Sonar import Sonar
 from Submarine import Submarine
 from AI import AI, MapTools
 import numpy as np
+import matplotlib.pyplot as plt
 import copy
 from random import choice
+
+def gen_heatmap(pred_enemy, color):
+    return plt.pcolor(np.flipud(pred_enemy), cmap=color, vmin=0, vmax=1)
 
 def gen_can_move(subs, map):
     for sub in subs:
@@ -46,6 +50,8 @@ for sub in submarines:
     print(MapTools.yx2loc(sub.location))
 map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
 gen_can_move(submarines, map_allies)
+
+fig = plt.figure()
 
 print(MapTools.gen_map_from_locs([sub.location for sub in submarines]))
 
@@ -209,9 +215,16 @@ while(True):
                 case "MISS":
                     obs_position = (POS_Y.get(loc_atk[0]), int(loc_atk[1]) - 1)
                     sonner_enemy.detect_miss(obs_position)
-    print(sonner_enemy.map_pred)
+    '''print(sonner_enemy.map_pred)
     print(sonner_enemy.index_pred)
     print(sonner_allies.map_pred)
     print(sonner_allies.index_pred)
-    print(map_allies)
+    print(map_allies)'''
+    fig.clear()
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax1 = gen_heatmap(sonner_enemy.map_pred, plt.cm.Reds)
+    ax2 = fig.add_subplot(1, 2, 2)
+    ax2 = gen_heatmap(map_allies, plt.cm.Greys)
+    plt.pause(.001)
+
     turn += 1
