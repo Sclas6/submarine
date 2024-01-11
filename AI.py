@@ -25,6 +25,20 @@ class MapTools:
         ls = {elem for elem in ls if map[elem[0]][elem[1]] == 0}
         return ls
 
+    def can_move(map):
+        ls = set()
+        locs = MapTools.get_pos(map)
+        for loc in locs:
+            next_1 = [(loc[0], loc[1] + 1), (loc[0], loc[1] - 1),
+                      (loc[0] + 1, loc[1]), (loc[0] - 1, loc[1])]
+            ls |= {pos for pos in next_1 if pos[0] >= 0 and pos[0] < len(map) and pos[1] >= 0 and pos[1] < len(map) and pos not in locs}
+            next_2 = [(loc[0], loc[1] + 2), (loc[0], loc[1] - 2),
+                      (loc[0] + 2, loc[1]), (loc[0] - 2, loc[1])]
+            for i, pos in enumerate(next_2):
+                if next_1[i] not in locs and pos not in locs and pos[0] >= 0 and pos[0] < len(map) and pos[1] >= 0 and pos[1] < len(map):
+                    ls.add(pos)
+        return ls
+
     def get_pos(map):
         ls = set()
         for y, a in enumerate(map):
@@ -59,15 +73,10 @@ class AI:
         m = 0
         tmp = Sonar(5, 4)
         for map in tmp.maps:
-            m = max(m, len(MapTools.can_atack(map)))
-        ls = [map for map in tmp.maps if len(MapTools.can_atack(map)) == m]
+            m = max(m, len(MapTools.can_atack(map)) + len(MapTools.can_move(map)))
+        ls = [map for map in tmp.maps if len(MapTools.can_atack(map)) + len(MapTools.can_move(map)) == m]
         return MapTools.get_pos(choice(ls))
-        '''m = 100
-        tmp = Sonner(5, 4)
-        for map in tmp.maps:
-            m = min(m, len(MapTools.can_atack(map)))
-        ls = [map for map in tmp.maps if len(MapTools.can_atack(map)) == m]
-        return MapTools.get_pos(choice(ls))'''
+
     def move_to(subs, loc: tuple):
         area_atackable = MapTools.get_surroundings(loc)
         m = 100

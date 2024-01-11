@@ -45,19 +45,26 @@ class Sonar:
         for poses in self.poses_pred:
             for j in range(len(poses)):
                 moved = [list(pos) for pos in poses]
+                internal = list(moved[j])
                 match dir:
                     case "UP":
                         moved[j][0] -= i
+                        internal[0] -= 1
                         if moved[j][0] < 0: continue
                     case "DOWN":
                         moved[j][0] += i
+                        internal[0] += 1
                         if moved[j][0] >= self.size: continue
                     case "RIGHT":
                         moved[j][1] += i
+                        internal[1] += 1
                         if moved[j][1] >= self.size: continue
                     case "LEFT":
                         moved[j][1] -= i
+                        internal[1] -= 1
                         if moved[j][1] < 0: continue
+                if i == 2 and tuple(internal) in [tuple(pos) for pos in poses]:
+                    continue
                 moved.sort()
                 moved = set([tuple(p) for p in moved])
                 if len(moved) != self.ships: continue
