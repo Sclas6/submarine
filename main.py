@@ -18,10 +18,10 @@ def gen_can_move(subs, map):
     for sub in subs:
         tmp = set()
         for mov_info in sub.can_move:
-            if mov_info[1] in cannot_enter:
-                continue
+            '''if mov_info[1] in cannot_enter:
+                continue'''
             if mov_info[0][1] == 1:
-                if mov_info[1] not in MapTools.get_pos(map):
+                if mov_info[1] not in MapTools.get_pos(map) and mov_info[1] not in cannot_enter:
                     tmp.add(mov_info)
             else:
                 internal = list(sub.location)
@@ -35,7 +35,7 @@ def gen_can_move(subs, map):
                     case "RIGHT":
                         internal[1] += 1
                 internal = tuple(internal)
-                if internal not in MapTools.get_pos(map) and mov_info[1] not in MapTools.get_pos(map):
+                if internal not in MapTools.get_pos(map) and mov_info[1] not in MapTools.get_pos(map) and internal not in cannot_enter and mov_info[1] not in cannot_enter:
                     tmp.add(mov_info)
         sub.can_move = tmp
 
