@@ -12,7 +12,7 @@ grey_alpha = cmap(np.arange(cmap.N))
 grey_alpha[:,-1] = np.linspace(0, 1, cmap.N)
 grey_alpha = ListedColormap(grey_alpha)
 
-cannot_enter = []
+cannot_enter = set()
 
 def gen_can_move(subs, map):
     for sub in subs:
@@ -99,7 +99,9 @@ while(True):
                                 for i, s in enumerate(submarines):
                                     if atk_position == s.location:
                                         del submarines[i]
-                                cannot_enter.append(atk_position)
+                                cannot_enter.add(atk_position)
+                                sonner_allies.cannot_enter.add(atk_position)
+                                sonner_enemy.cannot_enter.add(atk_position)
                                 map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
                                 gen_can_move(submarines, map_allies)
                             else:
@@ -129,115 +131,126 @@ while(True):
     else:
         command = ""
         token_list = []
-        if hit_count != 0:
-            # ATK
-            if hp_allies >= hp_enemy:
-                for pos in sonner_enemy.index_pred:
-                    if sonner_enemy.map_pred[pos[0]][pos[1]] == 1 and pos in MapTools.can_atack(map_allies):
-                        command = "ATK"
-                        token_list = list(MapTools.yx2loc(pos))
-                        break
-            if command != "ATK":
-                command = "MOV"
-                m_atacked = 1
-                ls_atacked = set()
-                m_not_atacked = 1
-                ls_not_atacked = set()
-                for sub in submarines:
-                    for mov in sub.can_move:
-                        print("*", end="", flush=True)
-                        tmp = copy.deepcopy(sonner_allies)
-                        tmp.detect_mov(mov[0][0], mov[0][1])
-                        if sub.location == atk_position:
-                            m_atacked = min(m_atacked, np.max(tmp.map_pred))
-                            ls_atacked.add((np.max(tmp.map_pred), sub.location, mov))
-                        else:
-                            m_not_atacked = min(m_atacked, np.max(tmp.map_pred))
-                            ls_not_atacked.add((np.max(tmp.map_pred), sub.location, mov))
-                print("")
-                ls_atacked = {n for n in ls_atacked if n[0] == m_atacked}
-                ls_not_atacked = {n for n in ls_not_atacked if n[0] == m_not_atacked}
-                if enemy_track:
-                    if hit_count < 2:
-                        n = choice(tuple(ls_not_atacked))
-                    else:
-                        n = choice(tuple(ls_atacked))
-                        enemy_track = False
-                else:
-                    if hit_count < 2:
-                        n = choice(tuple(ls_atacked))
-                    else:
-                        n = choice(tuple(ls_not_atacked))
-                        enemy_track = True
-                token_list = list(n[2][0])
-                for sub in submarines:
-                    if sub.location == n[1]:
-                        sub.location = n[2][1]
-                        sub.can_move = sub.get_can_move()
-                        map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
-                        gen_can_move(submarines, map_allies)
-                        sonner_allies.detect_mov(n[2][0][0], n[2][0][1])
-                #print(map_alies)
-
-        else:
-            # ATK
-            command = "ATK"
-            for loc in sonner_enemy.index_pred:
-                if loc in MapTools.can_atack(map_allies):
-                    loc_atk = MapTools.yx2loc(loc)
-                    token_list = list(loc_atk)
+        movable = 0
+        for s in submarines:
+            movable += len(s.can_move)
+        if movable == 0:
+            for pos in sonner_enemy.index_pred:
+                if pos in MapTools.can_atack(map_allies):
+                    command = "ATK"
+                    token_list = list(MapTools.yx2loc(pos))
                     break
-                else:
-                    if sonner_enemy.map_pred[loc[0]][loc[1]] >= 0.5:
-                        if loc in [sub.location for sub in submarines]:
-                            command = "MOV"
-                            for sub in submarines:
-                                if loc == sub.location:
-                                    mov_info = choice(tuple(sub.can_move))
-                                    token_list = list(mov_info[0])
-                                    sub.location = mov_info[1]
-                                    sub.can_move = sub.get_can_move()
-                                    gen_can_move(submarines, map_allies)
-                                    map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
-                                    sonner_allies.detect_mov(mov_info[0][0], mov_info[0][1])
-                                    break
+        else:
+            if hit_count != 0:
+                # ATK
+                if True:
+                    for pos in sonner_enemy.index_pred:
+                        if sonner_enemy.map_pred[pos[0]][pos[1]] == 1 and pos in MapTools.can_atack(map_allies):
+                            command = "ATK"
+                            token_list = list(MapTools.yx2loc(pos))
                             break
+                if command != "ATK":
+                    command = "MOV"
+                    m_atacked = 1
+                    ls_atacked = set()
+                    m_not_atacked = 1
+                    ls_not_atacked = set()
+                    for sub in submarines:
+                        for mov in sub.can_move:
+                            print("*", end="", flush=True)
+                            tmp = copy.deepcopy(sonner_allies)
+                            tmp.detect_mov(mov[0][0], mov[0][1])
+                            if sub.location == atk_position:
+                                m_atacked = min(m_atacked, np.max(tmp.map_pred))
+                                ls_atacked.add((np.max(tmp.map_pred), sub.location, mov))
+                            else:
+                                m_not_atacked = min(m_atacked, np.max(tmp.map_pred))
+                                ls_not_atacked.add((np.max(tmp.map_pred), sub.location, mov))
+                    print("")
+                    ls_atacked = {n for n in ls_atacked if n[0] == m_atacked}
+                    ls_not_atacked = {n for n in ls_not_atacked if n[0] == m_not_atacked}
+                    if enemy_track:
+                        if hit_count < 2:
+                            n = choice(tuple(ls_not_atacked))
                         else:
-                            command = "MOV"
-                            mov_info = AI.move_to(submarines, loc)
-                            token_list = list(mov_info[2][0])
-                            for sub in submarines:
-                                if sub.location == mov_info[1]:
-                                    sub.location = mov_info[2][1]
-                                    sub.can_move = sub.get_can_move()
-                                    map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
-                                    gen_can_move(submarines, map_allies)
-                                    sonner_allies.detect_mov(mov_info[2][0][0], mov_info[2][0][1])
-                                    break
-                            break
+                            n = choice(tuple(ls_atacked))
+                            enemy_track = False
+                    else:
+                        if hit_count < 2:
+                            n = choice(tuple(ls_atacked))
+                        else:
+                            n = choice(tuple(ls_not_atacked))
+                            enemy_track = True
+                    token_list = list(n[2][0])
+                    for sub in submarines:
+                        if sub.location == n[1]:
+                            sub.location = n[2][1]
+                            sub.can_move = sub.get_can_move()
+                            map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
+                            gen_can_move(submarines, map_allies)
+                            sonner_allies.detect_mov(n[2][0][0], n[2][0][1])
+                    #print(map_alies)
+
+            else:
+                # ATK
+                command = "ATK"
+                for loc in sonner_enemy.index_pred:
+                    if loc in MapTools.can_atack(map_allies):
+                        loc_atk = MapTools.yx2loc(loc)
+                        token_list = list(loc_atk)
+                        break
+                    else:
+                        if sonner_enemy.map_pred[loc[0]][loc[1]] >= 0.5:
+                            if loc in [sub.location for sub in submarines]:
+                                command = "MOV"
+                                for sub in submarines:
+                                    if loc == sub.location:
+                                        #mov_info = choice(tuple(sub.can_move))
+                                        mov_info = choice(tuple([m for m in sub.can_move if m[0][1] == 1]))
+                                        token_list = list(mov_info[0])
+                                        sub.location = mov_info[1]
+                                        sub.can_move = sub.get_can_move()
+                                        gen_can_move(submarines, map_allies)
+                                        map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
+                                        sonner_allies.detect_mov(mov_info[0][0], mov_info[0][1])
+                                        break
+                                break
+                            else:
+                                command = "MOV"
+                                mov_info = AI.move_to(submarines, loc)
+                                token_list = list(mov_info[2][0])
+                                for sub in submarines:
+                                    if sub.location == mov_info[1]:
+                                        sub.location = mov_info[2][1]
+                                        sub.can_move = sub.get_can_move()
+                                        map_allies = MapTools.gen_map_from_locs([sub.location for sub in submarines])
+                                        gen_can_move(submarines, map_allies)
+                                        sonner_allies.detect_mov(mov_info[2][0][0], mov_info[2][0][1])
+                                        break
+                                break
 
         print(f"{command} {token_list[0]} {token_list[1]}")
 
         if command == "ATK":
-            sonner_allies.detect_obs((POS_Y.get(loc_atk[0]), int(loc_atk[1]) - 1))
+            pos_atk = (POS_Y.get(token_list[0]), int(token_list[1]) - 1)
+            print(pos_atk)
+            sonner_allies.detect_obs(pos_atk)
             result = input("Result? : ").split()[0]
             match result:
                 case "SINK":
                     hp_enemy -= 1
-                    hit_position = (POS_Y.get(loc_atk[0]), int(loc_atk[1]) - 1)
-                    sonner_enemy.detect_sink(hit_position)
-                    cannot_enter.append(hit_position)
+                    sonner_enemy.detect_sink(pos_atk)
+                    cannot_enter.add(pos_atk)
+                    sonner_allies.cannot_enter.add(pos_atk)
+                    sonner_enemy.cannot_enter.add(pos_atk)
                     gen_can_move(submarines, map_allies)
                 case "HIT":
                     hp_enemy -= 1
-                    hit_position = (POS_Y.get(loc_atk[0]), int(loc_atk[1]) - 1)
-                    sonner_enemy.detect_hit(hit_position)
+                    sonner_enemy.detect_hit(pos_atk)
                 case "OBS":
-                    obs_position = (POS_Y.get(loc_atk[0]), int(loc_atk[1]) - 1)
-                    sonner_enemy.detect_obs(obs_position)
+                    sonner_enemy.detect_obs(pos_atk)
                 case "MISS":
-                    obs_position = (POS_Y.get(loc_atk[0]), int(loc_atk[1]) - 1)
-                    sonner_enemy.detect_miss(obs_position)
+                    sonner_enemy.detect_miss(pos_atk)
     '''print(sonner_enemy.map_pred)
     print(sonner_enemy.index_pred)
     print(sonner_allies.map_pred)
@@ -253,7 +266,7 @@ while(True):
     for s in submarines:
         for mov in s.can_move:
             can_move.add(mov[1])
-    print(can_move)
+    #print(can_move)
     ax3.pcolor(np.flipud(MapTools.gen_map_from_locs(can_move)), cmap=plt.cm.Blues, vmin=0, vmax=1)
     ax2.pcolor(np.flipud(map_allies), cmap=grey_alpha, vmin=0, vmax=1)
     plt.pause(.001)

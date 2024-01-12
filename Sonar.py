@@ -11,6 +11,7 @@ class Sonar:
         list_xy = range(size)
         compounds = list(it.product(list_xy, repeat=2))
         self.poses_pred = np.array(list(it.combinations(compounds, ships)))
+        self.cannot_enter = set()
         self.maps = self.gen_maps()
         self.map_pred = sum(self.maps) / len(self.maps)
 
@@ -18,9 +19,11 @@ class Sonar:
         maps = []
         for poses in self.poses_pred:
             copied = np.zeros((self.size, self.size))
+            possible = True
             for c in poses:
                 copied[c[0], c[1]] = 1
-            maps.append(copied)
+                if tuple(c) in self.cannot_enter: possible = False
+            if possible: maps.append(copied)
         self.maps = np.array(maps)
         self.map_pred = sum(self.maps) / len(self.maps)
         self.gen_pred_index()
@@ -63,7 +66,9 @@ class Sonar:
                         moved[j][1] -= i
                         internal[1] -= 1
                         if moved[j][1] < 0: continue
-                if i == 2 and tuple(internal) in [tuple(pos) for pos in poses]:
+                if i == 1 and tuple(moved[j]) in self.cannot_enter:
+                    continue
+                elif i == 2 and (tuple(internal) in [tuple(pos) for pos in poses] or tuple(internal) in self.cannot_enter or tuple(moved[j]) in self.cannot_enter):
                     continue
                 moved.sort()
                 moved = set([tuple(p) for p in moved])
@@ -74,7 +79,7 @@ class Sonar:
 
     def detect_obs(self, pos_obs: tuple):
         tmp = []
-        pos_possibility = set([tuple(p) for p in list(pos_obs) + np.array(CAN_ATK) if p[0] >= 0 and p[0] < self.size and p[1] >= 0 and p[1] < self.size])
+        pos_possibility = {tuple(p) for p in list(pos_obs) + np.array(CAN_ATK) if p[0] >= 0 and p[0] < self.size and p[1] >= 0 and p[1] < self.size}
         for poses in self.poses_pred:
             poses_set = set([tuple(p) for p in poses])
             possible = False
@@ -88,9 +93,8 @@ class Sonar:
     def detect_hit(self, pos_hit: tuple):
         tmp = []
         for poses in self.poses_pred:
-            poses_set = set([tuple(p) for p in poses])
             possible = False
-            if pos_hit in poses_set:
+            if pos_hit in {tuple(p) for p in poses}:
                 possible = True
             if possible: tmp.append(poses)
         self.poses_pred = np.array(tmp)
