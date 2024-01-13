@@ -169,18 +169,24 @@ while(True):
                     print("")
                     ls_atacked = {n for n in ls_atacked if n[0] == m_atacked}
                     ls_not_atacked = {n for n in ls_not_atacked if n[0] == m_not_atacked}
-                    if enemy_track:
-                        if hit_count < 2:
-                            n = choice(tuple(ls_not_atacked))
-                        else:
-                            n = choice(tuple(ls_atacked))
-                            enemy_track = False
+
+                    if len(ls_atacked) == 0:
+                        n = choice(tuple(ls_not_atacked))
+                    elif len(ls_not_atacked) == 0:
+                        n = choice(tuple(ls_atacked))
                     else:
-                        if hit_count < 2:
-                            n = choice(tuple(ls_atacked))
+                        if enemy_track:
+                            if hit_count < 2:
+                                n = choice(tuple(ls_not_atacked))
+                            else:
+                                n = choice(tuple(ls_atacked))
+                                enemy_track = False
                         else:
-                            n = choice(tuple(ls_not_atacked))
-                            enemy_track = True
+                            if hit_count < 2:
+                                n = choice(tuple(ls_atacked))
+                            else:
+                                n = choice(tuple(ls_not_atacked))
+                                enemy_track = True
                     token_list = list(n[2][0])
                     for sub in submarines:
                         if sub.location == n[1]:
@@ -235,22 +241,31 @@ while(True):
             pos_atk = (POS_Y.get(token_list[0]), int(token_list[1]) - 1)
             print(pos_atk)
             sonner_allies.detect_obs(pos_atk)
-            result = input("Result? : ").split()[0]
-            match result:
-                case "SINK":
-                    hp_enemy -= 1
-                    sonner_enemy.detect_sink(pos_atk)
-                    cannot_enter.add(pos_atk)
-                    sonner_allies.cannot_enter.add(pos_atk)
-                    sonner_enemy.cannot_enter.add(pos_atk)
-                    gen_can_move(submarines, map_allies)
-                case "HIT":
-                    hp_enemy -= 1
-                    sonner_enemy.detect_hit(pos_atk)
-                case "OBS":
-                    sonner_enemy.detect_obs(pos_atk)
-                case "MISS":
-                    sonner_enemy.detect_miss(pos_atk)
+            confirm = False
+            while not confirm:
+                result = input("Result? : ").split()[0]
+                match result:
+                    case "SINK":
+                        hp_enemy -= 1
+                        sonner_enemy.detect_sink(pos_atk)
+                        cannot_enter.add(pos_atk)
+                        sonner_allies.cannot_enter.add(pos_atk)
+                        sonner_enemy.cannot_enter.add(pos_atk)
+                        gen_can_move(submarines, map_allies)
+                        confirm = True
+                    case "HIT":
+                        hp_enemy -= 1
+                        sonner_enemy.detect_hit(pos_atk)
+                        confirm = True
+                    case "OBS":
+                        sonner_enemy.detect_obs(pos_atk)
+                        confirm = True
+                    case "MISS":
+                        sonner_enemy.detect_miss(pos_atk)
+                        confirm = True
+                    case x:
+                        print(f"ERROR: NOT COMMAND")
+                        continue
     '''print(sonner_enemy.map_pred)
     print(sonner_enemy.index_pred)
     print(sonner_allies.map_pred)
