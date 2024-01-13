@@ -82,6 +82,7 @@ class AI:
         m = 100
         ls = set()
         for sub in subs:
+            if sub.hp == 1 and sub != subs[-1]: continue
             for next in sub.can_move:
                 for lll in area_atackable:
                     norm = np.linalg.norm(np.array(next[1]) - np.array(lll), ord=1)
