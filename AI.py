@@ -1,9 +1,10 @@
 from Sonar import Sonar
 import numpy as np
 from random import choice
+from copy import deepcopy
 
 class MapTools:
-    def get_surroundings(loc: tuple):
+    def get_surroundings(loc: tuple) -> set:
         ls = set()
         ls.add((loc[0] - 1, loc[1]))
         ls.add((loc[0] - 1, loc[1] - 1))
@@ -91,3 +92,74 @@ class AI:
                     #print(f"{next[1]} ({sub.location}_{next[0]}) to {lll}: {norm}")
         ls = {n for n in ls if n[0] == m}
         return choice(tuple(ls))
+
+    def bfs(submarines, goal, cannot_enter):
+        area_atackable = MapTools.get_surroundings(goal)
+        map = MapTools.gen_map_from_locs([s.location for s in submarines])
+
+        min_dist = 100
+        min_route = []
+
+        for area in area_atackable:
+            if area in cannot_enter or area in MapTools.get_pos(map): continue
+            subs = deepcopy(submarines)
+            min_dist_for_area = 100
+            min_route_for_area = []
+            for sub in subs:
+                ls_dist = np.full((len(map), len(map)), -1)
+                ls_dist[sub.location] = 0
+                ls_visited = np.full((len(map), len(map)), False)
+                ls_visited[sub.location] = True
+                prev = np.full((len(map), len(map)), None)
+                queue = [sub.location]
+
+                while len(queue) > 0:
+                    q = queue.pop(0)
+                    sub.location = q
+                    sub.can_move = sub.get_can_move()
+                    if q == area:
+                        break
+                    for mov_info in sub.can_move:
+                        if mov_info[0][1] == 1:
+                            if mov_info[1] not in MapTools.get_pos(map) and mov_info[1] not in cannot_enter and not ls_visited[mov_info[1]]:
+                                queue.append(mov_info[1])
+                                ls_visited[mov_info[1]] = True
+                                ls_dist[mov_info[1]] = ls_dist[q] + mov_info[0][1]
+                                prev[mov_info[1]] = q
+                        else:
+                            internal = list(sub.location)
+                            match mov_info[0][0]:
+                                case "UP":
+                                    internal[0] -= 1
+                                case "DOWN":
+                                    internal[0] += 1
+                                case "LEFT":
+                                    internal[1] -= 1
+                                case "RIGHT":
+                                    internal[1] += 1
+                            internal = tuple(internal)
+                            if internal not in MapTools.get_pos(map) and mov_info[1] not in MapTools.get_pos(map) and internal not in cannot_enter and mov_info[1] not in cannot_enter and not ls_visited[mov_info[1]]:
+                                queue.append(mov_info[1])
+                                ls_visited[mov_info[1]] = True
+                                ls_dist[mov_info[1]] = ls_dist[q] + mov_info[0][1]
+                                prev[mov_info[1]] = q
+                now = area
+                ans = [now]
+                while now != None:
+                    now = prev[now]
+                    if now != None: ans.insert(0, now)
+                next = None
+                for s in submarines:
+                    if s.location == ans[0]:
+                        for mov in s.can_move:
+                            if mov[1] == ans[1]:
+                                next = (s.location, mov)
+                tmp = len(ans) if sub.hp != 1 else len(ans) + 10
+                if tmp < min_dist_for_area:
+                    min_dist_for_area = tmp
+                    min_route_for_area = next
+            if min_dist_for_area < min_dist:
+                min_dist = min_dist_for_area
+                min_route = min_route_for_area
+
+        return min_route

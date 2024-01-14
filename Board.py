@@ -159,13 +159,19 @@ class Board:
 
             return list(mov_info[0])
         else:
-            mov_info = AI.move_to(self.submarines, loc)
+            '''mov_info = AI.move_to(self.submarines, loc)
             sub = self.search_sub(mov_info[1])
             sub.location = mov_info[2][1]
             self.update_map()
-            self.sonar_ally.detect_mov(mov_info[2][0][0], mov_info[2][0][1])
+            self.sonar_ally.detect_mov(mov_info[2][0][0], mov_info[2][0][1])'''
+            # print("BSF SEARCH")
+            mov_info = AI.bfs(self.submarines, loc, self.cannot_enter)
+            sub = self.search_sub(mov_info[0])
+            sub.location = mov_info[1][1]
+            self.update_map()
+            self.sonar_ally.detect_mov(mov_info[1][0][0], mov_info[1][0][1])
 
-            return list(mov_info[2][0])
+            return list(mov_info[1][0])
 
     def atack(self, loc: tuple, result: str) -> bool:
         self.sonar_ally.detect_obs(loc)

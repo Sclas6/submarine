@@ -8,12 +8,14 @@ def plot_fig(fig, game: Board):
     game.update_map()
     fig.clear()
     ax1 = fig.add_subplot(221)
-    ax1.pcolor(np.flipud(game.sonar_enemy.map_pred), cmap=plt.cm.Greens, vmin=0, vmax=1)
     ax2 = fig.add_subplot(222)
     ax3 = fig.add_subplot(223)
+    ax4 = fig.add_subplot(224)
+    ax1.pcolor(np.flipud(game.sonar_enemy.map_pred), cmap=plt.cm.Greens, vmin=0, vmax=1)
     ax2.pcolor(np.flipud(MapTools.gen_map_from_locs(game.cannot_enter)), cmap=plt.cm.Reds, vmin=0, vmax=1)
-    ax3.pcolor(np.flipud(MapTools.gen_map_from_locs(game.can_move)), cmap=plt.cm.Blues, vmin=0, vmax=1)
     ax2.pcolor(np.flipud(game.map_ally), cmap=grey_alpha, vmin=0, vmax=1)
+    ax3.pcolor(np.flipud(MapTools.gen_map_from_locs(game.can_move)), cmap=plt.cm.Blues, vmin=0, vmax=1)
+    ax4.pcolor(np.flipud(game.sonar_ally.map_pred), cmap=plt.cm.Oranges, vmin=0, vmax=1)
     plt.pause(.001)
     plt.savefig(f"logs/T{game.turn}_{command}_{token_list}")
 
@@ -58,9 +60,7 @@ while(True):
         command = ""
         token_list = []
         movable = 0
-        for s in game.submarines:
-            movable += len(s.can_move)
-        if movable == 0:
+        if len(game.can_move) == 0:
             for pos in game.sonar_enemy.index_pred:
                 if pos in game.can_atack:
                     command = "ATK"
@@ -69,12 +69,11 @@ while(True):
         else:
             if game.hit_count != 0:
                 # ATK
-                if True:
-                    for pos in game.sonar_enemy.index_pred:
-                        if game.sonar_enemy.map_pred[pos[0]][pos[1]] == 1 and pos in game.can_atack:
-                            command = "ATK"
-                            token_list = list(MapTools.yx2loc(pos))
-                            break
+                for pos in game.sonar_enemy.index_pred:
+                    if game.sonar_enemy.map_pred[pos[0]][pos[1]] == 1 and pos in game.can_atack:
+                        command = "ATK"
+                        token_list = list(MapTools.yx2loc(pos))
+                        break
                 if command != "ATK":
                     command = "MOV"
                     token_list = game.move_for_escape()
@@ -92,14 +91,23 @@ while(True):
                             token_list = list(loc_atk)
                             break
                         else:
-                            if game.sonar_enemy.map_pred[loc[0]][loc[1]] > 0.5:
+                            if game.sonar_enemy.map_pred[loc[0]][loc[1]] > 0.5 and not MapTools.get_surroundings(loc).issubset(game.cannot_enter):
                                 command = "MOV"
                                 token_list = game.move_for_atack(loc)
                                 break
                 else:
-                    loc = game.sonar_enemy.index_pred[0]
-                    command = "MOV"
-                    token_list = game.move_for_atack(loc)
+                    # 現在地から攻撃可能な場所に敵がいる可能性が0
+                    done = False
+                    for loc in game.sonar_enemy.index_pred:
+                        if not MapTools.get_surroundings(loc) <= game.cannot_enter and game.sonar_enemy.map_pred[loc[0]][loc[1]] != 0:
+                            command = "MOV"
+                            token_list = game.move_for_atack(loc)
+                            done = True
+                            break
+                    if not done:
+                        # 敵がいる可能性のある全てのマスへの移動経路が見つからない
+                        loc_atk = MapTools.yx2loc(list(game.can_atack)[0])
+                        token_list = list(loc_atk)
 
         print(f"{command} {token_list[0]} {token_list[1]}")
 
